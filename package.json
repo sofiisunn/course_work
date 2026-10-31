@@ -1,0 +1,28 @@
+{
+  "name": "course_work",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sofiisunn/course_work.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/sofiisunn/course_work/issues"
+  },
+  "homepage": "https://github.com/sofiisunn/course_work#readme",
+  "dependencies": {
+    "@prisma/client": "^7.10.1",
+    "prisma": "^7.10.1"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.6"
+  }
+}
