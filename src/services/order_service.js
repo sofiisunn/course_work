@@ -1,3 +1,5 @@
+import { prisma } from "../db.js";
+
 export async function createOrder(orderData) {
     if (!orderData || typeof orderData !== "object" || Array.isArray(orderData)) {
         throw new Error("orderData is required and must be an object");
@@ -32,4 +34,25 @@ export async function createOrder(orderData) {
             itemsMap.set(item.product_id, item.quantity);
         }
     }
+    const customer = await prisma.customer.findUnique({
+        where: {
+            customer_id: customer_id
+        }
+    });
+    if (!customer) {
+        throw new Error("Customer not found");
+    }
+    const productIds = [...itemsMap.keys()];
+    const products = await prisma.product.findMany({
+        where: {
+            product_id: {
+                in: productIds
+            }
+        },
+        select: {
+            product_id: true,
+            product_price: true,
+            product_stock_quantity: true
+        }
+    });
 }
