@@ -1,6 +1,9 @@
 import { prisma } from "../db.js";
+const MAX_QUANTITY = 2147483647;
 
 export async function createOrder(orderData) {
+
+    // перевірка вхідних даних
     if (!orderData || typeof orderData !== "object" || Array.isArray(orderData)) {
         throw new Error("orderData is required and must be an object");
     }
@@ -14,6 +17,8 @@ export async function createOrder(orderData) {
     if (!Array.isArray(items) || items.length === 0) {
         throw new Error("items is required and must be a non-empty array");
     }
+
+    // перевірка кожного товару
     for (const item of items) {
         if (!item || typeof item !== "object" || Array.isArray(item)) {
             throw new Error("Each item is required and must be an object");
@@ -25,6 +30,8 @@ export async function createOrder(orderData) {
             throw new Error("Each item's quantity is required and must be a positive integer");
         }
     }
+
+    // об'єднання оданакових товарів
     const itemsMap = new Map();
     for (const item of items) {
         if (itemsMap.has(item.product_id)) {
@@ -34,25 +41,60 @@ export async function createOrder(orderData) {
             itemsMap.set(item.product_id, item.quantity);
         }
     }
-    const customer = await prisma.customer.findUnique({
-        where: {
-            customer_id: customer_id
+
+    // перевірка загальної кількості товарів
+    for (const [product_id, quantity] of itemsMap) {
+        if (quantity > MAX_QUANTITY) {
+            throw new Error("Quantity for product with ID " + product_id + " exceeds the maximum allowed value");
         }
-    });
-    if (!customer) {
-        throw new Error("Customer not found");
     }
-    const productIds = [...itemsMap.keys()];
-    const products = await prisma.product.findMany({
-        where: {
-            product_id: {
-                in: productIds
+
+
+    // транзакція створення замовлення
+    await prisma.$transaction(async (tx) => {
+
+        // перевірка клієнта
+        const customer = await tx.customer.findUnique({
+            where: {
+                customer_id: customer_id
             }
-        },
-        select: {
-            product_id: true,
-            product_price: true,
-            product_stock_quantity: true
+        });
+        if (!customer) {
+            throw new Error("Customer not found");
         }
+
+        // перевірка товарів і їх кількості
+        const productIds = [...itemsMap.keys()];
+        const products = await tx.product.findMany({
+            where: {
+                product_id: {
+                    in: productIds
+                }
+            },
+            select: {
+                product_id: true,
+                product_price: true,
+                product_stock_quantity: true
+            }
+        });
+        if (products.length !== productIds.length) {
+            throw new Error("One or more products not found");
+        }   
+
+        // перевірка товару на складі
+        for (const product of products) {
+            const orderedQuantity = itemsMap.get(product.product_id);
+            if (orderedQuantity > product.product_stock_quantity) {
+                throw new Error("Not enough stock for product with ID " + product.product_id);
+            }
+        }
+
+        // створення позицій замовлення
+        const order_items = products.map(product => ({
+            product_id: product.product_id,
+            order_item_quantity: itemsMap.get(product.product_id),
+            order_item_price: product.product_price
+        }));
     });
 }
+
