@@ -104,7 +104,7 @@
 | orders_id | SERIAL | PRIMARY KEY | Ідентифікатор замовлення |
 | customer_id | INTEGER | FOREIGN KEY, NOT NULL | Ідентифікатор клієнта |
 | orders_date | TIMESTAMP(6) | NOT NULL, DEFAULT CURRENT_TIMESTAMP | Дата створення замовлення |
-| orders_status | ENUM (order_status_type) | NOT NULL | Статус замовлення |
+| orders_status | ENUM (order_status_type) | NOT NULL, DEFAULT 'New' | Статус замовлення |
 | orders_delivery_address | TEXT | NOT NULL | Адреса доставки замовлення |
 
 **Індекси:**

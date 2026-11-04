@@ -68,7 +68,7 @@ model orders {
   orders_id               Int               @id @default(autoincrement())
   customer_id             Int
   orders_date             DateTime          @default(now()) @db.Timestamp(6)
-  orders_status           order_status_type
+  orders_status           order_status_type @default(New)
   orders_delivery_address String
   order_item              order_item[]
   customer                customer          @relation(fields: [customer_id], references: [customer_id], onDelete: Restrict)

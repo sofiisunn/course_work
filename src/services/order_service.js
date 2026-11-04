@@ -51,7 +51,7 @@ export async function createOrder(orderData) {
 
 
     // транзакція створення замовлення
-    await prisma.$transaction(async (tx) => {
+    return prisma.$transaction(async (tx) => {
 
         // перевірка клієнта
         const customer = await tx.customer.findUnique({
@@ -95,6 +95,60 @@ export async function createOrder(orderData) {
             order_item_quantity: itemsMap.get(product.product_id),
             order_item_price: product.product_price
         }));
+
+        // створення замовлення
+        const order = await tx.orders.create({
+        data: {
+            customer_id: customer_id,
+            orders_delivery_address: orders_delivery_address
+            }
+        });
+
+        // оновлення залишків
+        for (const [product_id, orderedQuantity] of itemsMap) {
+            const stockUpdate = await tx.product.updateMany({
+                where: {
+                    product_id: product_id,
+                    product_stock_quantity: {
+                    gte: orderedQuantity
+                    }
+                },
+                data: {
+                    product_stock_quantity: {
+                        decrement: orderedQuantity
+                    }
+                }
+            });
+            if (stockUpdate.count !== 1) {
+                throw new Error("Not enough stock for product with ID " + product_id);
+            }
+        }
+
+        // створення позицій замовлення
+        await tx.order_item.createMany({
+            data: order_items.map(item => ({
+                orders_id: order.orders_id,
+                product_id: item.product_id,
+                order_item_quantity: item.order_item_quantity,
+                order_item_price: item.order_item_price
+            }))
+        });
+
+        // повернення створеного замовлення з позиціями
+        const createdOrder = await tx.orders.findUnique({
+            where: {
+                orders_id: order.orders_id
+            },
+            include: {
+                customer: true,
+                order_item: {
+                    include: {
+                        product: true
+                    }
+                }
+            }
+        });
+        return createdOrder;
     });
 }
 
