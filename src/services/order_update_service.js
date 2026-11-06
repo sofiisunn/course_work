@@ -55,6 +55,50 @@ export async function updateOrderStatus(orders_id, newStatus) {
                 orders_status: newStatus
             }
         });
-        return statusUpdate;
+
+        if (statusUpdate.count !== 1) {
+            throw new Error("Order status was changed by another user");
+        }
+
+        if (newStatus === "Cancelled") {
+            const orderItems = await tx.order_item.findMany({
+                where: {
+                    orders_id: orders_id
+                },
+                select: {
+                    product_id: true,
+                    order_item_quantity: true
+                }
+            });
+
+            for (const item of orderItems) {
+                await tx.product.update({
+                    where: {
+                        product_id: item.product_id
+                    },
+                    data: {
+                        product_stock_quantity: {
+                            increment: item.order_item_quantity
+                        }
+                    }
+                });
+            }
+        }
+        
+        const updatedOrder = await tx.orders.findUnique({
+            where: {
+                orders_id: orders_id
+            },
+            include: {
+                customer: true,
+                order_item: {
+                    include: {
+                        product: true
+                    }
+                }
+            }
+        });
+
+        return updatedOrder;
     });
 }
