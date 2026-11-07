@@ -89,6 +89,7 @@
 | customer_phone_number | VARCHAR(16) | UNIQUE, NOT NULL | Номер телефону клієнта |
 | customer_birth_date | DATE | NOT NULL | Дата народження клієнта |
 | customer_bonuses | INTEGER | NOT NULL, DEFAULT 0, CHECK (customer_bonuses >= 0) | Кількість бонусів клієнта |
+| customer_deleted_at | TIMESTAMP(0) | NULL | Дата деактивації аккаунту |
 
 **Зв'язки:**
 - Один-до-багатьох з `orders` (один клієнт може мати кілька замовлень)
@@ -103,7 +104,7 @@
 |----------|-----|-----------|------|
 | orders_id | SERIAL | PRIMARY KEY | Ідентифікатор замовлення |
 | customer_id | INTEGER | FOREIGN KEY, NOT NULL | Ідентифікатор клієнта |
-| orders_date | TIMESTAMP(6) | NOT NULL, DEFAULT CURRENT_TIMESTAMP | Дата створення замовлення |
+| orders_date | TIMESTAMP(0) | NOT NULL, DEFAULT CURRENT_TIMESTAMP | Дата створення замовлення |
 | orders_status | ENUM (order_status_type) | NOT NULL, DEFAULT 'New' | Статус замовлення |
 | orders_delivery_address | TEXT | NOT NULL | Адреса доставки замовлення |
 

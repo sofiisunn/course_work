@@ -56,11 +56,12 @@ export async function createOrder(orderData) {
         // перевірка клієнта
         const customer = await tx.customer.findUnique({
             where: {
-                customer_id: customer_id
+                customer_id: customer_id,
+                customer_deleted_at: null
             }
         });
         if (!customer) {
-            throw new Error("Customer not found");
+            throw new Error("Customer not found or deactivated");
         }
 
         // перевірка товарів і їх кількості

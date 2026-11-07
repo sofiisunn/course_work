@@ -52,13 +52,14 @@ model product {
 }
 
 model customer {
-  customer_id           Int      @id @default(autoincrement())
-  customer_first_name   String   @db.VarChar(100)
-  customer_last_name    String   @db.VarChar(100)
-  customer_email        String   @unique @db.VarChar(254)
-  customer_phone_number String   @unique @db.VarChar(16)
-  customer_birth_date   DateTime @db.Date
-  customer_bonuses      Int      @default(0)
+  customer_id           Int       @id @default(autoincrement())
+  customer_first_name   String    @db.VarChar(100)
+  customer_last_name    String    @db.VarChar(100)
+  customer_email        String    @unique @db.VarChar(254)
+  customer_phone_number String    @unique @db.VarChar(16)
+  customer_birth_date   DateTime  @db.Date
+  customer_bonuses      Int       @default(0)
+  customer_deleted_at   DateTime? @db.Timestamp(0)
   orders                orders[]
   review                review[]
 }
@@ -67,7 +68,7 @@ model customer {
 model orders {
   orders_id               Int               @id @default(autoincrement())
   customer_id             Int
-  orders_date             DateTime          @default(now()) @db.Timestamp(6)
+  orders_date             DateTime          @default(now()) @db.Timestamp(0)
   orders_status           order_status_type @default(New)
   orders_delivery_address String
   order_item              order_item[]
