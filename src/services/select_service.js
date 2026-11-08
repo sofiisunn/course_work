@@ -25,3 +25,26 @@ export async function getProductsByBrand(brand_id, limit = 10, offset = 0) {
 
     return products;
 }
+
+export async function getActiveCustomers(limit = 10, offset = 0) {
+    // перевірка вхідних даних
+    if (!Number.isInteger(limit) || limit <= 0) {
+        throw new Error("limit must be a positive integer");
+    }
+    if (!Number.isInteger(offset) || offset < 0) {
+        throw new Error("offset must be a non-negative integer");
+    }
+
+    //запит для отримання активних клієнтів
+    const customers = await prisma.$queryRaw`
+    SELECT c.customer_id, c.customer_first_name || ' ' || c.customer_last_name AS customer_full_name, c.customer_email, o.orders_id, o.orders_date, o.orders_status
+    FROM customer AS c
+    LEFT JOIN orders AS o ON c.customer_id = o.customer_id
+    WHERE c.customer_deleted_at IS NULL
+    ORDER BY c.customer_id, o.orders_id
+    LIMIT ${limit}
+    OFFSET ${offset}
+     `;
+
+    return customers;
+}
